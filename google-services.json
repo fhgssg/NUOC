@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "525457089180",
+    "project_id": "watermate-app-9fa72",
+    "storage_bucket": "watermate-app-9fa72.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:525457089180:android:99f032a65883e0bc790359",
+        "android_client_info": {
+          "package_name": "com.gtx.watermate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCa4qpI0fL_gLiAe-D0ZmQkI0a-vAeCj4s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

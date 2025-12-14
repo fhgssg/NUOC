@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Water Mate",
+    "slug": "gtx-water-take",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "watermate",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash_bg.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F5F5"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.gtx.watermate"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      // THÊM: Plugin để nhúng file cấu hình Firebase Native vào build
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "googleServicesFile": "./google-services.json"
+          },
+          "ios": {
+            "googleServicesFile": "./GoogleService-Info.plist"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "97cfde78-934b-4c24-a00f-9e1c6e38c4ca"
+      }
+    }
+  }
+}
