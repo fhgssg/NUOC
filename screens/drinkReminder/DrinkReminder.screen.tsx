@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, TextInput, Animated } from 'react-native';
+import { View, Text, StyleSheet, Switch, TextInput, Animated, TouchableOpacity } from 'react-native';
 import { COLOR_THEME } from '@/style/ColorTheme';
 import { useDrinkReminder } from './hook';
 import { FontAwesome } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ const DrinkReminder = () => {
     toggleReminder,
     reminderMinutes,
     updateReminderMinutes,
+    setReminderTime,
   } = useDrinkReminder();
 
   const [localHours, setLocalHours] = useState('0');
@@ -270,6 +271,14 @@ const DrinkReminder = () => {
                   </View>
                 </View>
               </View>
+
+              {/* Set Time Button */}
+              <TouchableOpacity
+                style={styles.setTimeButton}
+                onPress={setReminderTime}
+                activeOpacity={0.8}>
+                <Text style={styles.setTimeButtonText}>Đặt thời gian</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -442,6 +451,25 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: ScreenDimension.scale(12),
     textAlign: 'center',
+  },
+  setTimeButton: {
+    backgroundColor: COLOR_THEME.base.primary,
+    borderRadius: 12,
+    paddingVertical: ScreenDimension.scale(16),
+    paddingHorizontal: ScreenDimension.scale(24),
+    marginTop: ScreenDimension.scale(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLOR_THEME.base.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  setTimeButtonText: {
+    fontSize: ScreenDimension.fontScale(16),
+    fontWeight: '700',
+    color: '#fff',
   },
   infoContainer: {
     backgroundColor: '#fff',

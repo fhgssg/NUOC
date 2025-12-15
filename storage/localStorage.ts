@@ -1,6 +1,3 @@
-// Local storage service for offline-first approach
-// Note: TypeScript linter may show errors, but these are false positives.
-// The package is installed and types are available at runtime.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserInfo, DrinkLog } from './userinfo/type';
 
@@ -9,9 +6,9 @@ const STORAGE_KEYS = {
     DRINK_LOGS: '@water_mate:drink_logs',
     IS_REGISTERED: '@water_mate:is_registered',
     PENDING_SYNC: '@water_mate:pending_sync',
+    HAS_SEEN_ONBOARDING: '@water_mate:has_seen_onboarding',
 };
 
-// Generate a local user ID if not exists
 export const getLocalUserId = async (): Promise<string> => {
     const existingId = await AsyncStorage.getItem('@water_mate:local_user_id');
     if (existingId) {
@@ -22,7 +19,6 @@ export const getLocalUserId = async (): Promise<string> => {
     return newId;
 };
 
-// User Info Operations
 export const saveUserInfoLocal = async (userInfo: UserInfo): Promise<void> => {
     try {
         await AsyncStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
@@ -45,7 +41,6 @@ export const getUserInfoLocal = async (): Promise<UserInfo | null> => {
     }
 };
 
-// Drink Logs Operations
 export const saveDrinkLogLocal = async (log: Omit<DrinkLog, 'logId'>): Promise<DrinkLog> => {
     try {
         const logs = await getAllDrinkLogsLocal();
@@ -97,7 +92,6 @@ export const saveAllDrinkLogsLocal = async (logs: DrinkLog[]): Promise<void> => 
     }
 };
 
-// Registration Status
 export const setIsRegistered = async (isRegistered: boolean): Promise<void> => {
     await AsyncStorage.setItem(STORAGE_KEYS.IS_REGISTERED, JSON.stringify(isRegistered));
 };
@@ -107,7 +101,6 @@ export const getIsRegistered = async (): Promise<boolean> => {
     return data ? JSON.parse(data) : false;
 };
 
-// Pending Sync Operations
 export const markPendingSync = async (): Promise<void> => {
     await AsyncStorage.setItem(STORAGE_KEYS.PENDING_SYNC, JSON.stringify(true));
 };
@@ -121,7 +114,15 @@ export const hasPendingSync = async (): Promise<boolean> => {
     return data ? JSON.parse(data) : false;
 };
 
-// Clear all local data (for logout or account deletion)
+export const setHasSeenOnboarding = async (hasSeen: boolean): Promise<void> => {
+    await AsyncStorage.setItem(STORAGE_KEYS.HAS_SEEN_ONBOARDING, JSON.stringify(hasSeen));
+};
+
+export const getHasSeenOnboarding = async (): Promise<boolean> => {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.HAS_SEEN_ONBOARDING);
+    return data ? JSON.parse(data) : false;
+};
+
 export const clearAllLocalData = async (): Promise<void> => {
     try {
         await AsyncStorage.multiRemove([
@@ -129,6 +130,7 @@ export const clearAllLocalData = async (): Promise<void> => {
             STORAGE_KEYS.DRINK_LOGS,
             STORAGE_KEYS.IS_REGISTERED,
             STORAGE_KEYS.PENDING_SYNC,
+            STORAGE_KEYS.HAS_SEEN_ONBOARDING,
             '@water_mate:local_user_id',
         ]);
     } catch (error) {

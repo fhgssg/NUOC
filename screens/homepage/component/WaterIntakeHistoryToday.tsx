@@ -9,6 +9,7 @@ import React, { useContext, useState } from 'react';
 import { FontContext } from '@/context/FontThemeContext';
 import { IntakeHistoryType } from '@/storage/userinfo/type';
 import HistoryCard from './HistoryCard';
+import { ScreenDimension } from '@/constants/Dimensions';
 
 type WaterIntakeHistoryTodayProps = {
   todayHistoryList: IntakeHistoryType[];
@@ -97,9 +98,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 30,
+    paddingHorizontal: ScreenDimension.horizontalPadding,
     paddingTop: 30,
-    paddingBottom: 0,
+    paddingBottom: ScreenDimension.scale(20),
     marginTop: 0,
   },
   header: {
@@ -108,14 +109,17 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     marginTop: 0,
     paddingTop: 0,
-    marginBottom: 0,
+    marginBottom: 15,
   },
   content: {
     flex: 1,
+    paddingBottom: ScreenDimension.scale(10),
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: ScreenDimension.scale(40),
+    minHeight: 200,
   },
 });

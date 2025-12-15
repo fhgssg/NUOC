@@ -8,10 +8,12 @@ import {
   ReminderInterval,
   getIntervalLabel,
 } from './util';
+import { useAuth } from '@/context/UserAuthContext';
 
 const REMINDER_MINUTES_KEY = '@drinkReminder:customMinutes';
 
 export const useDrinkReminder = () => {
+  const { user: userInfo } = useAuth();
   const [isReminderActive, setIsReminderActive] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<ReminderInterval>('2hours');
   const [reminderMinutes, setReminderMinutes] = useState<number>(120);
@@ -94,7 +96,8 @@ export const useDrinkReminder = () => {
       const intervalToUse = interval || selectedInterval;
       await Notifications.cancelAllScheduledNotificationsAsync();
       const customMinutes = intervalToUse === 'custom' ? reminderMinutes : undefined;
-      await startReminder(intervalToUse, null, customMinutes);
+      // Pass userInfo to enable smart scheduling based on wakeUpTime and bedTime
+      await startReminder(intervalToUse, userInfo || null, customMinutes);
       const intervalLabel = getIntervalLabel(intervalToUse, customMinutes);
       if (Platform.OS === 'android') {
         ToastAndroid.show(`Nhắc nhở đã được đặt mỗi ${intervalLabel}`, 3000);
@@ -117,11 +120,42 @@ export const useDrinkReminder = () => {
     try {
       setReminderMinutes(minutes);
       await AsyncStorage.setItem(REMINDER_MINUTES_KEY, minutes.toString());
-      if (isReminderActive) {
-        await scheduleReminder('custom');
-      }
+      // Không tự động đặt nhắc nhở khi chỉ nhập thời gian
     } catch (error) {
       console.error('Error updating reminder minutes:', error);
+    }
+  };
+
+  // Hàm đặt thời gian nhắc nhở và hiển thị thông báo
+  const setReminderTime = async () => {
+    if (Platform.OS === 'web') {
+      alert('Notifications are not available on web. Please use the mobile app.');
+      return;
+    }
+
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      // Pass userInfo to enable smart scheduling based on wakeUpTime and bedTime
+      await startReminder('custom', userInfo || null, reminderMinutes);
+      const intervalLabel = getIntervalLabel('custom', reminderMinutes);
+      
+      // Hiển thị thông báo "Nhắc nhở đã đặt mỗi XX giờ"
+      const message = `Nhắc nhở đã đặt mỗi ${intervalLabel}`;
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(message, 3000);
+      } else {
+        alert(message);
+      }
+      
+      setIsReminderActive(true);
+      await getAllnoti();
+    } catch (error) {
+      console.error('Error setting reminder time:', error);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Có lỗi xảy ra khi đặt nhắc nhở', 3000);
+      } else {
+        alert('Có lỗi xảy ra khi đặt nhắc nhở');
+      }
     }
   };
 
@@ -133,5 +167,6 @@ export const useDrinkReminder = () => {
     scheduleReminder,
     reminderMinutes,
     updateReminderMinutes,
+    setReminderTime,
   };
 };

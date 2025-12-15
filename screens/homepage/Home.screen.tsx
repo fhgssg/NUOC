@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import React, { useEffect } from 'react';
 import ScreenContainer from '@/components/container/ScreenContainer';
 import WaterIntakeTracker from './component/WaterIntakeTracker';
@@ -7,7 +7,7 @@ import { ByDefaultCupsOptions } from '@/constants/OptionConstant';
 import { formatedCurrentDate } from '@/util/SiteUtil';
 import WaterIntakeHistoryToday from './component/WaterIntakeHistoryToday';
 import { filterTodayIntakeHistory } from './util';
-import { requestPermissionNotificationReminder, scheduleMorningNotification, scheduleBedtimeNotification } from '../drinkReminder/util';
+import { requestPermissionNotificationReminder, scheduleMorningNotification, scheduleBedtimeNotification, sendSmartReminderNotification } from '../drinkReminder/util';
 import { ScreenDimension } from '@/constants/Dimensions';
 
 const HomeScreen = () => {
@@ -32,7 +32,52 @@ const HomeScreen = () => {
         console.error('Error scheduling bedtime notification:', error);
       });
     }
+
+    // Cleanup: Cancel notifications when component unmounts or dependencies change
+    return () => {
+      // Note: scheduleMorningNotification and scheduleBedtimeNotification 
+      // already cancel old notifications before scheduling new ones
+      // This cleanup is mainly for when component unmounts
+    };
   }, [userInfo?.wakeUpTime, userInfo?.bedTime, userInfo?.isCompleted]);
+
+  // Check for smart reminder notification (when user hasn't drunk water for 3+ hours)
+  useEffect(() => {
+    if (!userInfo?.isCompleted || Platform.OS === 'web') return;
+
+    const checkSmartReminder = () => {
+      // Get the most recent drink log from today
+      const today = formatedCurrentDate();
+      const todayHistory = filterTodayIntakeHistory(userWaterIntakeHistory, today);
+      
+      let lastDrinkTime: Date | null = null;
+      if (todayHistory.length > 0) {
+        // Get the most recent log (first item in sorted descending order)
+        const mostRecentLog = todayHistory[0];
+        if (mostRecentLog.date === today && mostRecentLog.time) {
+          const [hours, minutes, seconds] = mostRecentLog.time.split(':').map(Number);
+          const logDate = new Date();
+          logDate.setHours(hours, minutes, seconds || 0, 0);
+          lastDrinkTime = logDate;
+        }
+      }
+
+      const dailyGoal = userInfo.dailyGoal || 2000;
+      const currentIntake = userInfo.dailyIntake || 0;
+
+      sendSmartReminderNotification(lastDrinkTime, dailyGoal, currentIntake).catch(error => {
+        console.error('Error sending smart reminder notification:', error);
+      });
+    };
+
+    // Check immediately
+    checkSmartReminder();
+
+    // Check every hour
+    const interval = setInterval(checkSmartReminder, 60 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [userInfo, userWaterIntakeHistory]);
 
   return (
     <ScreenContainer headerTitle="Trang chủ">
@@ -87,7 +132,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     width: '100%',
-    paddingHorizontal: ScreenDimension.horizontalPadding,
+    paddingHorizontal: 0,
   },
   trackerContainer: {
     width: '100%',
@@ -96,6 +141,5 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     marginTop: ScreenDimension.scale(20),
-    paddingBottom: ScreenDimension.scale(20),
   },
 });

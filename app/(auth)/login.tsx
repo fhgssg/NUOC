@@ -1,8 +1,6 @@
-// /app/(auth)/login.tsx
-
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
-import { useAuth } from '../../context/UserAuthContext'; // Dùng relative path để import hook
+import { useAuth } from '../../context/UserAuthContext';
 import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenDimension } from '@/constants/Dimensions';
@@ -15,17 +13,13 @@ export default function LoginScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const { signIn, isAuthenticated, isLoading, user, isRegistered } = useAuth(); // Lấy thêm state từ context
+    const { signIn, isAuthenticated, isLoading, user, isRegistered } = useAuth();
     const router = useRouter();
 
-    // Refs cho các TextInput
     const emailInputRef = useRef<TextInput>(null);
     const passwordInputRef = useRef<TextInput>(null);
 
-    // Tự động điều hướng khi đăng nhập thành công (chỉ khi đã đăng nhập Firebase)
     useEffect(() => {
-        // Chỉ redirect nếu đã đăng nhập Firebase (isRegistered = true) và có user
-        // Sau khi đăng nhập, luôn chuyển đến trang chủ để tiếp tục sử dụng ứng dụng
         if (!isLoading && isAuthenticated && user && isRegistered) {
             router.replace('/(tabs)');
         }
@@ -53,7 +47,6 @@ export default function LoginScreen() {
     };
 
     const handleLogin = async () => {
-        // Kiểm tra và focus vào ô đầu tiên còn trống
         if (!email) {
             setError('Vui lòng điền đủ email và mật khẩu.');
             emailInputRef.current?.focus();
@@ -69,12 +62,8 @@ export default function LoginScreen() {
         try {
             await signIn(email, password);
             console.log('Sign in completed, waiting for auth state update...');
-            // Đăng nhập thành công, useEffect sẽ tự động điều hướng khi isAuthenticated thay đổi
-            // Không cần setLoading(false) ở đây vì sẽ redirect
         } catch (err: any) {
-            // Log như warning vì đây là thông báo bình thường khi người dùng nhập sai thông tin
             console.warn('Login failed:', err?.code || err?.message || 'Invalid credentials');
-            // Firebase có thể trả về error.code hoặc error.message
             const errorCode = err?.code || (err?.message?.includes('auth/') ? err.message : '') || 'unknown-error';
             const errorMessage = getErrorMessage(errorCode);
             setError(errorMessage);

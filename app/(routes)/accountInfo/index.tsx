@@ -222,7 +222,6 @@ const AccountInfo = () => {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}>
-        {/* Header với Avatar và Tên */}
         <View style={styles.headerSection}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
@@ -284,7 +283,6 @@ const AccountInfo = () => {
           )}
         </View>
 
-        {/* Trạng thái đồng bộ */}
         {!isRegistered && (
           <View style={styles.card}>
             <View style={styles.syncStatusContainer}>
@@ -346,7 +344,6 @@ const AccountInfo = () => {
           </View>
         )}
 
-        {/* Thông tin tài khoản */}
         <View style={styles.card}>
           <Text style={[textTheme.heading2, styles.cardTitle]}>
             Thông tin tài khoản
@@ -373,7 +370,6 @@ const AccountInfo = () => {
           </View>
         </View>
 
-        {/* Bảo mật */}
         {isRegistered && (
           <View style={styles.card}>
             <Text style={[textTheme.heading2, styles.cardTitle]}>
@@ -404,7 +400,6 @@ const AccountInfo = () => {
           </View>
         )}
 
-        {/* Quản lý tài khoản */}
         {isRegistered && (
           <View style={styles.card}>
             <Text style={[textTheme.heading2, styles.cardTitle]}>
@@ -436,7 +431,6 @@ const AccountInfo = () => {
         )}
       </ScrollView>
 
-      {/* Modal đổi mật khẩu */}
       <Modal
         visible={showPasswordModal}
         animationType="slide"
@@ -483,7 +477,6 @@ const AccountInfo = () => {
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   nestedScrollEnabled={true}>
-                  {/* Mật khẩu hiện tại */}
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelContainer}>
                       <Feather name="lock" size={16} color="#666" />
@@ -531,7 +524,6 @@ const AccountInfo = () => {
                     ) : null}
                   </View>
 
-                  {/* Mật khẩu mới */}
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelContainer}>
                       <Feather name="key" size={16} color="#666" />
@@ -576,7 +568,6 @@ const AccountInfo = () => {
                     </View>
                   </View>
 
-                  {/* Xác nhận mật khẩu mới */}
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelContainer}>
                       <Feather name="check-circle" size={16} color="#666" />

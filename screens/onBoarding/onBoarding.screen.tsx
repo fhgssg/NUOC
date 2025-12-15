@@ -6,18 +6,17 @@ import { FontContext } from '@/context/FontThemeContext';
 import BoardingView from './component/BoardingView';
 import { ButtonTheme } from '@/style/ButtonTheme';
 import { COLOR_THEME } from '@/style/ColorTheme';
-// LOẠI BỎ: import {UserContext} from '@/context/UserAuthContext';
-import { router } from 'expo-router'; // THÊM: Import router để chuyển hướng
+import { router } from 'expo-router';
+import * as LocalStorage from '@/storage/localStorage';
 
 const OnBoardingScreen = () => {
   const { textTheme } = useContext(FontContext);
   const [step, setStep] = useState(1);
 
-  // LOẠI BỎ TOÀN BỘ DÒNG CÓ VẤN ĐỀ VỀ CONTEXT CŨ:
-  // const {handleWalkthroughCompleted, appStatus} = useContext(UserContext);
-
-  // FIX: Tạo hàm chuyển hướng trực tiếp thay thế cho handleWalkthroughCompleted
-  const navigateToUserInfo = () => {
+  // Hàm đánh dấu đã xem onboarding và chuyển đến màn hình nhập thông tin
+  const navigateToUserInfo = async () => {
+    // Lưu flag đã xem onboarding
+    await LocalStorage.setHasSeenOnboarding(true);
     // Sau khi Walkthrough xong (Skip hoặc Lets Get Started),
     // chuyển người dùng đến màn hình nhập thông tin cá nhân
     router.replace('/(routes)/userInfo');

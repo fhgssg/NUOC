@@ -240,7 +240,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuItemDanger: {
-    // Style riêng cho item nguy hiểm (đăng xuất)
   },
   menuItemText: {
     fontSize: 16,

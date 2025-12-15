@@ -5,9 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  // Đảm bảo chiều cao tối thiểu 60px, tự động thêm padding nếu có nút điều hướng
   const tabBarHeight = Math.max(60, 60 + insets.bottom);
-  // Padding bottom tối thiểu 10px, hoặc theo safe area nếu có nút điều hướng
   const tabBarPaddingBottom = Math.max(10, insets.bottom);
 
   return (

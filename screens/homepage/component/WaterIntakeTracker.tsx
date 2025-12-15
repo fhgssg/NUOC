@@ -213,7 +213,7 @@ export default WaterIntakeTracker;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 0,
     paddingHorizontal: ScreenDimension.horizontalPadding,
     paddingTop: ScreenDimension.verticalPadding * 2,
     paddingBottom: ScreenDimension.verticalPadding,

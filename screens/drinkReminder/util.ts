@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 import { UserInfo } from '@/storage/userinfo/type';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const REMINDER_INTERVALS = {
   '30min': 30 * 60,
@@ -25,7 +26,8 @@ export const getIntervalLabel = (interval: ReminderInterval, customMinutes?: num
       if (minutes === 0) {
         return `${hours} giờ`;
       } else {
-        return `${hours}.${Math.round(minutes / 6)} giờ`;
+        // Hiển thị cả giờ và phút riêng biệt
+        return `${hours} giờ ${minutes} phút`;
       }
     }
   }
@@ -164,22 +166,20 @@ const createSmartSchedule = (
       const reminderTotalMinutes = reminderHour * 60 + reminderMin;
 
       // Tính toán thời gian bed cho ngày hiện tại
-      let currentBedTotalMinutes = bedTotalMinutes;
+      // Nếu bedTime < wakeUpTime, nghĩa là bedTime qua đêm (ví dụ: 23:00 đến 07:00)
+      let isWithinActiveHours: boolean;
       if (bedTotalMinutes < wakeTotalMinutes) {
-        // Nếu bedTime qua đêm, cộng thêm 24 giờ
-        if (reminderTotalMinutes < wakeTotalMinutes) {
-          // Reminder ở ngày hôm trước
-          currentBedTotalMinutes = bedTotalMinutes + 24 * 60;
-        } else {
-          // Reminder ở ngày hiện tại
-          currentBedTotalMinutes = bedTotalMinutes;
-        }
+        // BedTime qua đêm: active hours từ wakeUpTime đến bedTime của ngày hôm sau
+        // Reminder hợp lệ nếu: reminder >= wakeUpTime HOẶC reminder < bedTime
+        isWithinActiveHours = 
+          reminderTotalMinutes >= wakeTotalMinutes || 
+          reminderTotalMinutes < bedTotalMinutes;
+      } else {
+        // BedTime cùng ngày: active hours từ wakeUpTime đến bedTime
+        isWithinActiveHours = 
+          reminderTotalMinutes >= wakeTotalMinutes && 
+          reminderTotalMinutes < bedTotalMinutes;
       }
-
-      // Chỉ thêm nếu thời gian nhắc nhở nằm trong khoảng wakeUpTime đến bedTime
-      const isWithinActiveHours =
-        reminderTotalMinutes >= wakeTotalMinutes &&
-        reminderTotalMinutes < currentBedTotalMinutes;
 
       if (isWithinActiveHours && reminderTime > now && schedule.length < MAX_NOTIFICATIONS) {
         schedule.push(reminderTime);
@@ -327,7 +327,16 @@ export const scheduleBedtimeNotification = async (
   try {
     const [hours, minutes] = (userInfo.bedTime || '23:00').split(':').map(Number);
 
-    await Notifications.cancelScheduledNotificationAsync('bedtime-water-reminder');
+    // Cancel all existing bedtime notifications to avoid duplicates
+    const allNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notification of allNotifications) {
+      if (
+        notification.identifier.startsWith('bedtime-water-reminder') ||
+        notification.content.data?.type === 'bedtime-reminder'
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+    }
 
     const now = new Date();
     const targetTime = new Date();
@@ -405,7 +414,16 @@ export const scheduleMorningNotification = async (
 
     const baseGoal = userInfo.dailyGoal || 2000;
 
-    await Notifications.cancelScheduledNotificationAsync('morning-water-goal');
+    // Cancel all existing morning notifications to avoid duplicates
+    const allNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notification of allNotifications) {
+      if (
+        notification.identifier.startsWith('morning-water-goal') ||
+        notification.content.data?.type === 'morning-goal'
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+    }
 
     const now = new Date();
     const targetTime = new Date();
@@ -418,7 +436,7 @@ export const scheduleMorningNotification = async (
     const secondsUntilTarget = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
 
     if (Platform.OS === 'android') {
-      await Notifications.cancelScheduledNotificationAsync('morning-water-goal-repeat');
+      // Already cancelled above
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -508,6 +526,7 @@ export const cancelReminderNotificationsWhenGoalReached = async (): Promise<void
       const notificationData = notification.content.data;
       const identifier = notification.identifier;
 
+      // Cancel all drink reminders (periodic reminders)
       if (
         notificationData?.type === 'drink-reminder' ||
         identifier.startsWith('drink-reminder-')
@@ -516,20 +535,41 @@ export const cancelReminderNotificationsWhenGoalReached = async (): Promise<void
         continue;
       }
 
+      // Cancel all bedtime reminders (both Android day-0 to day-7 and iOS)
       if (
         notificationData?.type === 'bedtime-reminder' ||
         identifier.startsWith('bedtime-water-reminder')
       ) {
-        if (Platform.OS === 'android' && identifier === 'bedtime-water-reminder-day-0') {
-          await Notifications.cancelScheduledNotificationAsync(identifier);
-        }
-        else if (Platform.OS === 'ios' && identifier === 'bedtime-water-reminder') {
-          await Notifications.cancelScheduledNotificationAsync(identifier);
-        }
+        await Notifications.cancelScheduledNotificationAsync(identifier);
+        continue;
+      }
+
+      // Cancel morning goal notifications when goal is reached
+      // (User already achieved goal, no need for morning reminder)
+      if (
+        notificationData?.type === 'morning-goal' ||
+        identifier.startsWith('morning-water-goal')
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(identifier);
       }
     }
   } catch (error) {
     console.error('Error cancelling reminder notifications:', error);
+  }
+};
+
+// Clear goal achieved flag when intake drops below 95% of goal
+export const clearGoalAchievedFlag = async (): Promise<void> => {
+  if (Platform.OS === 'web') {
+    return;
+  }
+
+  try {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const goalAchievedKey = `@water_mate:goal_achieved_${today}`;
+    await AsyncStorage.removeItem(goalAchievedKey);
+  } catch (error) {
+    console.error('Error clearing goal achieved flag:', error);
   }
 };
 
@@ -543,23 +583,34 @@ export const sendGoalAchievedNotification = async (
 
   try {
     if (currentIntake >= dailyGoal * 0.95) {
-      await cancelReminderNotificationsWhenGoalReached();
+      // Check if we already sent a goal achieved notification today using AsyncStorage
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const goalAchievedKey = `@water_mate:goal_achieved_${today}`;
+      const hasGoalAchievedToday = await AsyncStorage.getItem(goalAchievedKey);
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '🎉 Chúc mừng!',
-          body: `Bạn đã đạt mục tiêu uống nước hôm nay! (${Math.round(currentIntake)}ml / ${dailyGoal}ml)`,
-          sound: true,
-          vibrate: [3],
-          data: {
-            type: 'goal-achieved',
-            goal: dailyGoal,
-            intake: currentIntake,
+      // Only send if we haven't sent one today
+      if (!hasGoalAchievedToday) {
+        await cancelReminderNotificationsWhenGoalReached();
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '🎉 Chúc mừng!',
+            body: `Bạn đã đạt mục tiêu uống nước hôm nay! (${Math.round(currentIntake)}ml / ${dailyGoal}ml)`,
+            sound: true,
+            vibrate: [3],
+            data: {
+              type: 'goal-achieved',
+              goal: dailyGoal,
+              intake: currentIntake,
+            },
           },
-        },
-        trigger: null,
-        identifier: `goal-achieved-${Date.now()}`,
-      });
+          trigger: null,
+          identifier: `goal-achieved-${Date.now()}`,
+        });
+
+        // Mark as sent today
+        await AsyncStorage.setItem(goalAchievedKey, 'true');
+      }
     }
   } catch (error) {
     console.error('Error sending goal achieved notification:', error);

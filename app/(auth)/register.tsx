@@ -1,8 +1,6 @@
-// /app/(auth)/register.tsx
-
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
-import { useAuth } from '../../context/UserAuthContext'; // Dùng relative path để import hook
+import { useAuth } from '../../context/UserAuthContext';
 import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenDimension } from '@/constants/Dimensions';
@@ -20,15 +18,11 @@ export default function RegisterScreen() {
     const { signUp, isAuthenticated, isLoading, user, isRegistered } = useAuth();
     const router = useRouter();
 
-    // Refs cho các TextInput
     const emailInputRef = useRef<TextInput>(null);
     const passwordInputRef = useRef<TextInput>(null);
     const confirmPasswordInputRef = useRef<TextInput>(null);
 
-    // Tự động điều hướng khi đăng ký thành công
     useEffect(() => {
-        // Chỉ redirect nếu đã đăng ký thành công (isRegistered = true) và có user
-        // Sau khi đăng ký, luôn chuyển đến trang chủ để tiếp tục sử dụng ứng dụng
         if (!isLoading && isAuthenticated && user && isRegistered) {
             router.replace('/(tabs)');
         }
@@ -52,7 +46,6 @@ export default function RegisterScreen() {
     };
 
     const handleRegister = async () => {
-        // Kiểm tra và focus vào ô đầu tiên còn trống
         if (!email) {
             setError('Vui lòng điền đủ email và mật khẩu.');
             emailInputRef.current?.focus();
@@ -69,7 +62,6 @@ export default function RegisterScreen() {
             return;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             setError('Email không đúng định dạng. Vui lòng kiểm tra lại.');
@@ -77,14 +69,12 @@ export default function RegisterScreen() {
             return;
         }
 
-        // Validate password length
         if (password.length < 6) {
             setError('Mật khẩu phải có ít nhất 6 ký tự.');
             passwordInputRef.current?.focus();
             return;
         }
 
-        // Validate password match
         if (password !== confirmPassword) {
             setError('Mật khẩu và xác nhận mật khẩu không khớp.');
             confirmPasswordInputRef.current?.focus();
@@ -94,10 +84,7 @@ export default function RegisterScreen() {
         setLoading(true);
         setError('');
         try {
-            // Không cần name nữa, dùng empty string
             await signUp(email, password, '');
-            // Đăng ký thành công, chờ auth state update và chuyển đến trang chủ
-            // useEffect sẽ tự động điều hướng khi isAuthenticated và isRegistered thay đổi
         } catch (err: any) {
             console.error('Registration error:', err);
             const errorCode = err?.code || err?.message || 'unknown-error';

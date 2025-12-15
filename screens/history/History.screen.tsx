@@ -12,6 +12,7 @@ import { formatedCurrentDate } from '@/util/SiteUtil';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { COLOR_THEME } from '@/style/ColorTheme';
+import { ScreenDimension } from '@/constants/Dimensions';
 
 type GroupedHistory = {
   date: string;
@@ -260,13 +261,13 @@ const styles = StyleSheet.create({
   },
   historyLayerContent: {
     flexGrow: 1,
-    minHeight: '100%',
+    paddingBottom: ScreenDimension.scale(20),
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: ScreenDimension.horizontalPadding,
   },
   emptyImage: {
     height: 100,
@@ -297,9 +298,9 @@ const styles = StyleSheet.create({
     width: '100%',
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 30,
+    paddingHorizontal: ScreenDimension.horizontalPadding,
     paddingTop: 20,
-    paddingBottom: 20,
+    paddingBottom: ScreenDimension.scale(30),
     minHeight: '100%',
   },
   dateLabelRow: {
@@ -332,11 +333,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     marginBottom: 20,
-    marginHorizontal: -30,
+    marginHorizontal: -ScreenDimension.horizontalPadding,
   },
   itemsContainer: {
     width: '100%',
-    paddingBottom: 10,
+    paddingBottom: ScreenDimension.scale(20),
   },
   itemWrapper: {
     marginBottom: 10,

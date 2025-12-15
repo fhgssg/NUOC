@@ -5,7 +5,7 @@ import { saveUserInfo, getUserInfo, updateUserInfo, addDrinkLog, getAllDrinkLogs
 import { UserInfo, AuthState, DrinkLog, IntakeHistoryType } from '../storage/userinfo/type';
 import { format } from 'date-fns';
 import { calculateWaterIntake } from '../screens/userInfo/util';
-import { scheduleMorningNotification, scheduleBedtimeNotification, sendGoalAchievedNotification } from '../screens/drinkReminder/util';
+import { scheduleMorningNotification, scheduleBedtimeNotification, sendGoalAchievedNotification, startReminder, clearGoalAchievedFlag } from '../screens/drinkReminder/util';
 import { Platform } from 'react-native';
 import * as LocalStorage from '../storage/localStorage';
 const initialState: AuthState = {
@@ -984,25 +984,54 @@ export const UserAuthContextProvider: React.FC<{ children: ReactNode }> = ({ chi
 
     setWaterIntakeHistory(prev => prev.filter(log => log.id !== id));
     if (logToDelete && authState.user) {
-      const volumeToSubtract = parseInt(logToDelete.amount) || 0;
-      const newIntake = Math.max(0, (authState.user.dailyIntake || 0) - volumeToSubtract);
-      const updatedUserInfo: UserInfo = {
-        ...authState.user,
-        dailyIntake: newIntake,
-      };
-      await LocalStorage.saveUserInfoLocal(updatedUserInfo);
-      setAuthState(prev => ({
-        ...prev,
-        user: updatedUserInfo,
-      }));
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const dailyGoal = authState.user.dailyGoal || 2000;
+      const previousIntake = authState.user.dailyIntake || 0;
+      const wasGoalAchieved = previousIntake >= dailyGoal * 0.95;
+      
+      if (logToDelete.date === today) {
+        const volumeToSubtract = parseInt(logToDelete.amount) || 0;
+        const newIntake = Math.max(0, previousIntake - volumeToSubtract);
+        const updatedUserInfo: UserInfo = {
+          ...authState.user,
+          dailyIntake: newIntake,
+        };
+        await LocalStorage.saveUserInfoLocal(updatedUserInfo);
+        setAuthState(prev => ({
+          ...prev,
+          user: updatedUserInfo,
+        }));
 
-      if (isRegistered && auth.currentUser) {
-        try {
-          await deleteDrinkLog(id);
-          await updateUserInfo(authState.user.userId, { dailyIntake: newIntake });
-        } catch (error) {
-          console.error('Error deleting from Firestore, deleted locally:', error);
-          await LocalStorage.markPendingSync();
+        if (isRegistered && auth.currentUser) {
+          try {
+            await deleteDrinkLog(id);
+            await updateUserInfo(authState.user.userId, { dailyIntake: newIntake });
+          } catch (error) {
+            console.error('Error deleting from Firestore, deleted locally:', error);
+            await LocalStorage.markPendingSync();
+          }
+        }
+
+        if (wasGoalAchieved && newIntake < dailyGoal * 0.95 && updatedUserInfo.isCompleted) {
+          if (Platform.OS !== 'web' && updatedUserInfo.wakeUpTime && updatedUserInfo.bedTime) {
+            try {
+              await clearGoalAchievedFlag();
+              await startReminder('2hours', updatedUserInfo);
+              await scheduleMorningNotification(updatedUserInfo);
+              await scheduleBedtimeNotification(updatedUserInfo);
+            } catch (error) {
+              console.error('Error rescheduling notifications after goal drop:', error);
+            }
+          }
+        }
+      } else {
+        if (isRegistered && auth.currentUser) {
+          try {
+            await deleteDrinkLog(id);
+          } catch (error) {
+            console.error('Error deleting from Firestore, deleted locally:', error);
+            await LocalStorage.markPendingSync();
+          }
         }
       }
     }
