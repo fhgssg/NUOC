@@ -10,8 +10,14 @@ const Index = () => {
 
   useEffect(() => {
     const checkOnboarding = async () => {
-      const seen = await LocalStorage.getHasSeenOnboarding();
-      setHasSeenOnboarding(seen);
+      try {
+        const seen = await LocalStorage.getHasSeenOnboarding();
+        console.log('[Index] hasSeenOnboarding value:', seen);
+        setHasSeenOnboarding(seen);
+      } catch (error) {
+        console.error('[Index] Error checking onboarding:', error);
+        setHasSeenOnboarding(false);
+      }
     };
     checkOnboarding();
   }, []);
@@ -26,7 +32,13 @@ const Index = () => {
     return <View style={{ flex: 1, backgroundColor: '#F5F5F5' }} />;
   }
 
-  if (!hasSeenOnboarding) {
+  console.log('[Index] Rendering with hasSeenOnboarding:', hasSeenOnboarding, 'user:', user?.isCompleted);
+
+  // Nếu user đã hoàn thành thông tin (isCompleted = true), 
+  // thì không cần hiển thị onboarding nữa, ngay cả khi flag bị mất
+  const shouldShowOnboarding = !hasSeenOnboarding && !(user?.isCompleted);
+
+  if (shouldShowOnboarding) {
     return <Redirect href={'/(routes)/onBoarding'} />;
   }
 

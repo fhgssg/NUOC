@@ -15,11 +15,23 @@ const OnBoardingScreen = () => {
 
   // Hàm đánh dấu đã xem onboarding và chuyển đến màn hình nhập thông tin
   const navigateToUserInfo = async () => {
-    // Lưu flag đã xem onboarding
-    await LocalStorage.setHasSeenOnboarding(true);
-    // Sau khi Walkthrough xong (Skip hoặc Lets Get Started),
-    // chuyển người dùng đến màn hình nhập thông tin cá nhân
-    router.replace('/(routes)/userInfo');
+    try {
+      // Lưu flag đã xem onboarding
+      console.log('[OnBoarding] Setting hasSeenOnboarding to true');
+      await LocalStorage.setHasSeenOnboarding(true);
+      
+      // Verify the value was saved
+      const verify = await LocalStorage.getHasSeenOnboarding();
+      console.log('[OnBoarding] Verified hasSeenOnboarding:', verify);
+      
+      // Sau khi Walkthrough xong (Skip hoặc Lets Get Started),
+      // chuyển người dùng đến màn hình nhập thông tin cá nhân
+      router.replace('/(routes)/userInfo');
+    } catch (error) {
+      console.error('[OnBoarding] Error saving onboarding status:', error);
+      // Still navigate even if save fails
+      router.replace('/(routes)/userInfo');
+    }
   }
 
 

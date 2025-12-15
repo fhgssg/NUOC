@@ -854,6 +854,9 @@ export const UserAuthContextProvider: React.FC<{ children: ReactNode }> = ({ chi
     };
 
     await LocalStorage.saveUserInfoLocal(newUserInfo);
+    // Đảm bảo lưu flag đã xem onboarding khi hoàn thành userInfo
+    await LocalStorage.setHasSeenOnboarding(true);
+    
     if (isRegistered && auth.currentUser) {
       try {
         await saveUserInfo(newUserInfo);
